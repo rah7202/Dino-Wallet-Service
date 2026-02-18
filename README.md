@@ -28,7 +28,7 @@ A production-grade, closed-loop virtual wallet service built with **double-entry
 
 ## ✨ Features
 
-### Core Requirements ✅
+### Core Features 
 
 | Requirement | Implementation | Status |
 |------------|----------------|--------|
@@ -39,14 +39,14 @@ A production-grade, closed-loop virtual wallet service built with **double-entry
 | **Concurrency Control** | Deadlock-safe canonical lock ordering | 
 | **Idempotency** | SHA-256 request hashing + 24h cache | 
 
-### Brownie Points 🌟
+### Extra Features 
 
 | Feature | Implementation | Status |
 |---------|----------------|--------|
-| 🌟 **Deadlock Avoidance** | Wallet locks acquired in sorted UUID order | 
-| 🌟 **Double-Entry Ledger** | Balance computed from ledger entries | 
-| 🌟 **Containerization** | Multi-stage Dockerfile + docker-compose | 
-| 🌟 **Cloud Deployment** | Live on Render with PostgreSQL | 
+| **Deadlock Avoidance** | Wallet locks acquired in sorted UUID order | 
+| **Double-Entry Ledger** | Balance computed from ledger entries | 
+| **Containerization** | Multi-stage Dockerfile + docker-compose | 
+| **Cloud Deployment** | Live on Render with PostgreSQL | 
 
 ---
 
@@ -243,7 +243,7 @@ flowchart TD
 git clone https://github.com/rah7202/Dino-Wallet-Service.git
 cd Dino-Wallet-Service
 
-# 2. Install dependencies
+# 2. Install dependencies 
 npm install
 
 # 3. Configure environment
@@ -958,9 +958,8 @@ dino-wallet/
 
 ---
 
-## ✅ Assignment Checklist
 
-### Core Requirements
+### Core Features
 
 - [x] **Data Seeding:** `npm run seed` creates assets, wallets, balances
 - [x] **RESTful API:** 8 endpoints with proper HTTP verbs
@@ -969,12 +968,12 @@ dino-wallet/
 - [x] **Idempotency:** SHA-256 hashing + 24h cache
 - [x] **README:** Complete documentation with setup instructions
 
-### Brownie Points
+### Extra Features
 
-- [x] **🌟 Deadlock Avoidance:** Canonical lock ordering (sorted UUIDs)
-- [x] **🌟 Double-Entry Ledger:** Balance computed from entries
-- [x] **🌟 Containerization:** Multi-stage Dockerfile + docker-compose
-- [x] **🌟 Cloud Hosting:** Live on Render with PostgreSQL
+- [x] **Deadlock Avoidance:** Canonical lock ordering (sorted UUIDs)
+- [x] **Double-Entry Ledger:** Balance computed from entries
+- [x] **Containerization:** Multi-stage Dockerfile + docker-compose
+- [x] **Cloud Hosting:** Live on Render with PostgreSQL
 
 ---
 
@@ -1011,10 +1010,10 @@ dino-wallet/
 
 ## 👨‍💻 Author
 
-**Your Name**  
-GitHub: [@your-username](https://github.com/rah7202)  
-Email: [EMAIL_ADDRESS](rpidiyar249@gmail.com)
-Linkedin: [](https://www.linkedin.com/in/rpidiyar/)
+**RAHUL PIDIYAR**  
+GitHub: [https://github.com/rah7202]  
+Email: [rpidiyar249@gmail.com]
+Linkedin: [https://www.linkedin.com/in/rahul-pidiyar-101115284/]
 
 **Live Demo:** https://dino-wallet-api.onrender.com
 
@@ -1025,20 +1024,3 @@ Linkedin: [](https://www.linkedin.com/in/rpidiyar/)
 MIT License - See LICENSE file for details
 
 ---
-
-## 🙏 Acknowledgments
-
-- Assignment designed by **Dino Ventures**
-- Built with Node.js, Express, and PostgreSQL
-- Deployed on Render
-- Inspired by double-entry bookkeeping principles
-
----
-
-<div align="center">
-
-**Built with ❤️ for Dino Ventures**
-
-[Live Demo](https://dino-wallet-api.onrender.com) • [GitHub](https://github.com/your-username/dino-wallet) • [Report Bug](https://github.com/your-username/dino-wallet/issues)
-
-</div>
