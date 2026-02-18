@@ -1,0 +1,28 @@
+{
+  "name": "dino-wallet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "migrate": "node src/db/migrate.js",
+    "seed": "node src/db/seed.js",
+    "setup": "node scripts/setup-db.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "decimal.js": "^10.6.0",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "pg": "^8.18.0",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

@@ -1,0 +1,42 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: wallet_user
+      POSTGRES_PASSWORD: wallet_pass
+      POSTGRES_DB: wallet_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wallet_user -d wallet_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Application
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://wallet_user:wallet_pass@postgres:5432/wallet_db
+      PORT: 3000
+      NODE_ENV: production
+      DB_POOL_MAX: 10
+      DB_STATEMENT_TIMEOUT_MS: 10000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
