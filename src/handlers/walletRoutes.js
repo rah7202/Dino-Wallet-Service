@@ -9,20 +9,18 @@ const AssetRepository = require('../repositories/AssetRepository');
 const IdempotencyRepository = require('../repositories/IdempotencyRepository');
 const { BadRequestError } = require('../errors/ApiError');
 
-/**
- * Wallet routes factory - wires up dependencies and returns router
- */
+
 module.exports = function walletRoutes(pool) {
     const router = Router();
 
-    // Initialize repositories
+
     const walletRepo = new WalletRepository(pool);
     const ledgerRepo = new LedgerRepository(pool);
     const txRepo = new TransactionRepository(pool);
     const assetRepo = new AssetRepository(pool);
     const idemRepo = new IdempotencyRepository(pool);
 
-    // Initialize service
+
     const service = new WalletService({
         walletRepo,
         ledgerRepo,
@@ -31,14 +29,7 @@ module.exports = function walletRoutes(pool) {
         idemRepo,
     });
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // READ ENDPOINTS
-    // ══════════════════════════════════════════════════════════════════════════
 
-    /**
-     * GET /api/v1/assets
-     * List all active asset types
-     */
     router.get('/assets', async (req, res, next) => {
         try {
             const assets = await service.listAssets();
@@ -48,10 +39,7 @@ module.exports = function walletRoutes(pool) {
         }
     });
 
-    /**
-     * GET /api/v1/wallets
-     * List all wallets
-     */
+
     router.get('/wallets', async (req, res, next) => {
         try {
             const wallets = await service.listWallets();
@@ -61,10 +49,7 @@ module.exports = function walletRoutes(pool) {
         }
     });
 
-    /**
-     * GET /api/v1/wallets/:walletId/balance
-     * Get wallet balance (computed from ledger)
-     */
+
     router.get('/wallets/:walletId/balance', async (req, res, next) => {
         try {
             const result = await service.getBalance(req.params.walletId);
@@ -74,14 +59,7 @@ module.exports = function walletRoutes(pool) {
         }
     });
 
-    /**
-     * GET /api/v1/wallets/:walletId/transactions
-     * Get transaction history (paginated)
-     * 
-     * Query params:
-     *   - limit: max results (1-100, default 20)
-     *   - offset: skip N results (default 0)
-     */
+
     router.get('/wallets/:walletId/transactions', async (req, res, next) => {
         try {
             const limit = Math.max(1, Math.min(100, parseInt(req.query.limit || '20', 10)));
@@ -94,26 +72,7 @@ module.exports = function walletRoutes(pool) {
         }
     });
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // WRITE ENDPOINTS (The Three Flows)
-    // ══════════════════════════════════════════════════════════════════════════
 
-    /**
-     * POST /api/v1/wallets/:walletId/topup
-     * 
-     * FLOW 1: Top-up (Purchase)
-     * User purchases credits with real money
-     * 
-     * Headers:
-     *   - Idempotency-Key: <uuid> (required)
-     * 
-     * Body:
-     *   - asset_type_id: UUID of asset (required)
-     *   - amount: positive number (required)
-     *   - reference: business reference like "PAY-123" (required)
-     *   - initiated_by: who initiated (optional, default "system")
-     *   - metadata: arbitrary JSON (optional)
-     */
     router.post('/wallets/:walletId/topup', async (req, res, next) => {
         try {
             const idemKey = requireIdempotencyKey(req);
@@ -136,17 +95,7 @@ module.exports = function walletRoutes(pool) {
         }
     });
 
-    /**
-     * POST /api/v1/wallets/:walletId/bonus
-     * 
-     * FLOW 2: Bonus / Incentive
-     * System issues free credits to user
-     * 
-     * Headers:
-     *   - Idempotency-Key: <uuid> (required)
-     * 
-     * Body: (same as topup)
-     */
+
     router.post('/wallets/:walletId/bonus', async (req, res, next) => {
         try {
             const idemKey = requireIdempotencyKey(req);
@@ -169,17 +118,7 @@ module.exports = function walletRoutes(pool) {
         }
     });
 
-    /**
-     * POST /api/v1/wallets/:walletId/spend
-     * 
-     * FLOW 3: Spend / Purchase
-     * User spends credits to buy service
-     * 
-     * Headers:
-     *   - Idempotency-Key: <uuid> (required)
-     * 
-     * Body: (same as topup)
-     */
+
     router.post('/wallets/:walletId/spend', async (req, res, next) => {
         try {
             const idemKey = requireIdempotencyKey(req);
@@ -205,13 +144,7 @@ module.exports = function walletRoutes(pool) {
     return router;
 };
 
-// ══════════════════════════════════════════════════════════════════════════
-// VALIDATION HELPERS
-// ══════════════════════════════════════════════════════════════════════════
 
-/**
- * Extract and validate Idempotency-Key header
- */
 function requireIdempotencyKey(req) {
     const key = req.headers['idempotency-key'];
 
@@ -226,9 +159,7 @@ function requireIdempotencyKey(req) {
     return key.trim();
 }
 
-/**
- * Validate transfer request body
- */
+
 function validateTransferBody(body) {
     if (!body || typeof body !== 'object') {
         throw new BadRequestError('Request body must be a JSON object');
@@ -236,12 +167,12 @@ function validateTransferBody(body) {
 
     const { asset_type_id, amount, reference, initiated_by, metadata } = body;
 
-    // Validate asset_type_id
+
     if (!asset_type_id || typeof asset_type_id !== 'string') {
         throw new BadRequestError('asset_type_id is required (UUID string)');
     }
 
-    // Validate amount
+
     if (amount === undefined || amount === null) {
         throw new BadRequestError('amount is required');
     }
@@ -251,7 +182,6 @@ function validateTransferBody(body) {
         throw new BadRequestError('amount must be a positive number');
     }
 
-    // Validate reference
     if (!reference || typeof reference !== 'string' || reference.trim() === '') {
         throw new BadRequestError('reference is required (e.g., "PAY-123", "BONUS-001")');
     }

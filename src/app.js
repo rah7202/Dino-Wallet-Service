@@ -10,37 +10,24 @@ const config = require('./config');
 
 const app = express();
 
-// ══════════════════════════════════════════════════════════════════════════
-// MIDDLEWARE
-// ══════════════════════════════════════════════════════════════════════════
 
 app.use(express.json());
 app.use(requestLogger);
 
-// ══════════════════════════════════════════════════════════════════════════
-// ROUTES
-// ══════════════════════════════════════════════════════════════════════════
-
 app.use('/health', healthRoutes(pool));
 app.use('/api/v1', walletRoutes(pool));
 
-// 404 handler
 app.use((req, res) => {
     res.status(404).json({
         error: `Route ${req.method} ${req.path} not found`,
     });
 });
 
-// Global error handler (MUST be last)
 app.use(errorHandler);
-
-// ══════════════════════════════════════════════════════════════════════════
-// START SERVER
-// ══════════════════════════════════════════════════════════════════════════
 
 const server = app.listen(config.PORT, () => {
     console.log('');
-    console.log('🦕 Dino Wallet Service');
+    console.log('Dino Wallet Service');
     console.log('─'.repeat(50));
     console.log(`Environment : ${config.NODE_ENV}`);
     console.log(`Port        : ${config.PORT}`);
@@ -48,10 +35,6 @@ const server = app.listen(config.PORT, () => {
     console.log('─'.repeat(50));
     console.log('');
 });
-
-// ══════════════════════════════════════════════════════════════════════════
-// GRACEFUL SHUTDOWN
-// ══════════════════════════════════════════════════════════════════════════
 
 const shutdown = async (signal) => {
     console.log(`\n${signal} received — shutting down gracefully...`);
@@ -62,7 +45,7 @@ const shutdown = async (signal) => {
         try {
             await pool.end();
             console.log('Database pool closed');
-            console.log('Goodbye 👋\n');
+            console.log('Goodbye');
             process.exit(0);
         } catch (err) {
             console.error('Error during shutdown:', err);
@@ -70,7 +53,6 @@ const shutdown = async (signal) => {
         }
     });
 
-    // Force shutdown after 10 seconds
     setTimeout(() => {
         console.error('Forced shutdown after timeout');
         process.exit(1);

@@ -2,16 +2,11 @@
 
 const { Router } = require('express');
 
-/**
- * Health check endpoint factory
- */
+
 module.exports = function healthRoutes(pool) {
     const router = Router();
 
-    /**
-     * GET /health
-     * Returns API and database status
-     */
+
     router.get('/', async (req, res) => {
         let dbStatus = 'ok';
         let dbLatencyMs = null;

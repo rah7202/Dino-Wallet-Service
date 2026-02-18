@@ -5,9 +5,7 @@ class AssetRepository {
         this.pool = pool;
     }
 
-    /**
-     * List all active asset types
-     */
+
     async listActive() {
         const { rows } = await this.pool.query(`
       SELECT id, name, symbol, description, is_active, created_at
@@ -18,9 +16,7 @@ class AssetRepository {
         return rows;
     }
 
-    /**
-     * Get asset type by ID
-     */
+
     async getById(id) {
         const { rows } = await this.pool.query(`
       SELECT id, name, symbol, description, is_active

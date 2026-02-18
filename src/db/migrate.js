@@ -3,16 +3,11 @@
 const { pool } = require('./pool');
 
 const MIGRATION_SQL = `
--- ============================================================================
--- Dino Wallet Service — Double-Entry Ledger Schema
--- ============================================================================
 
 BEGIN;
 
--- Enable UUID generation
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- ── Asset Types ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS asset_types (
   id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
   name        TEXT         NOT NULL UNIQUE,
@@ -22,7 +17,7 @@ CREATE TABLE IF NOT EXISTS asset_types (
   created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
--- ── Wallets ─────────────────────────────────────────────────────────────────
+
 CREATE TABLE IF NOT EXISTS wallets (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_ref   TEXT        NOT NULL,
@@ -36,7 +31,7 @@ CREATE TABLE IF NOT EXISTS wallets (
 CREATE INDEX IF NOT EXISTS idx_wallets_owner_ref ON wallets(owner_ref);
 CREATE INDEX IF NOT EXISTS idx_wallets_active ON wallets(owner_type) WHERE is_active = TRUE;
 
--- Auto-update updated_at
+
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -50,7 +45,7 @@ CREATE TRIGGER trg_wallets_updated_at
   BEFORE UPDATE ON wallets
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
--- ── Transactions ────────────────────────────────────────────────────────────
+
 CREATE TABLE IF NOT EXISTS transactions (
   id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   transaction_type TEXT        NOT NULL CHECK (transaction_type IN ('topup', 'bonus', 'spend')),
@@ -63,9 +58,7 @@ CREATE TABLE IF NOT EXISTS transactions (
 CREATE INDEX IF NOT EXISTS idx_transactions_ref ON transactions(reference);
 CREATE INDEX IF NOT EXISTS idx_transactions_created ON transactions(created_at DESC);
 
--- ── Ledger Entries (Double-Entry) ──────────────────────────────────────────
--- Every transaction creates exactly TWO entries: debit + credit
--- Balance = SUM(credits) - SUM(debits)
+
 CREATE TABLE IF NOT EXISTS ledger_entries (
   id              UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
   transaction_id  UUID          NOT NULL REFERENCES transactions(id) ON DELETE RESTRICT,
@@ -80,7 +73,7 @@ CREATE INDEX IF NOT EXISTS idx_ledger_wallet_asset ON ledger_entries(wallet_id, 
 CREATE INDEX IF NOT EXISTS idx_ledger_transaction ON ledger_entries(transaction_id);
 CREATE INDEX IF NOT EXISTS idx_ledger_created ON ledger_entries(created_at DESC);
 
--- ── Idempotency Keys ────────────────────────────────────────────────────────
+
 CREATE TABLE IF NOT EXISTS idempotency_keys (
   id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   idem_key        TEXT        NOT NULL UNIQUE,
@@ -100,22 +93,19 @@ COMMIT;
 `;
 
 async function migrate() {
-    console.log('Running migrations...');
+  console.log('Running migrations...');
 
-    try {
-        await pool.query(MIGRATION_SQL);
-        console.log('✅ Migrations completed successfully');
-    } catch (err) {
-        console.error('❌ Migration failed:', err.message);
-        process.exit(1);
-    } finally {
-        await pool.end();
-    }
+  try {
+    await pool.query(MIGRATION_SQL);
+    console.log('Migrations completed successfully');
+  } catch (err) {
+    console.error('Migration failed:', err.message);
+    process.exit(1);
+  }
 }
 
-// Run if called directly
 if (require.main === module) {
-    migrate();
+  migrate();
 }
 
 module.exports = migrate;

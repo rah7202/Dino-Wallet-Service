@@ -2,7 +2,7 @@
 
 const { pool } = require('./pool');
 
-// Fixed UUIDs for deterministic, re-runnable seeds
+
 const SEEDS = {
     assets: {
         goldCoins: '11111111-0000-0000-0000-000000000001',
@@ -31,7 +31,6 @@ async function seed() {
     try {
         await client.query('BEGIN');
 
-        // ── Asset Types ────────────────────────────────────────────────────────
         console.log('  → Inserting asset types...');
         await client.query(`
       INSERT INTO asset_types (id, name, symbol, description) VALUES
@@ -41,7 +40,6 @@ async function seed() {
       ON CONFLICT (id) DO NOTHING
     `, [SEEDS.assets.goldCoins, SEEDS.assets.diamonds, SEEDS.assets.loyaltyPoints]);
 
-        // ── System Wallets ─────────────────────────────────────────────────────
         console.log('  → Creating system wallets...');
         await client.query(`
       INSERT INTO wallets (id, owner_ref, owner_type, label) VALUES
@@ -51,7 +49,6 @@ async function seed() {
       ON CONFLICT (id) DO NOTHING
     `, [SEEDS.wallets.treasury, SEEDS.wallets.bonusPool, SEEDS.wallets.revenue]);
 
-        // ── User Wallets ───────────────────────────────────────────────────────
         console.log('  → Creating user wallets...');
         await client.query(`
       INSERT INTO wallets (id, owner_ref, owner_type, label) VALUES
@@ -60,13 +57,11 @@ async function seed() {
       ON CONFLICT (id) DO NOTHING
     `, [SEEDS.wallets.alice, SEEDS.wallets.bob]);
 
-        // ── Seed Balances via Ledger Entries ───────────────────────────────────
-        // All balances are created as proper double-entry transactions
-        // so the ledger is balanced from the start.
+
 
         console.log('  → Seeding initial balances...');
 
-        // Tx1: Alice ← 1,000 Gold Coins (from Treasury)
+
         await client.query(`
       INSERT INTO transactions (id, transaction_type, reference, initiated_by)
       VALUES ($1, 'topup', 'SEED-ALICE-GOLD', 'system')
@@ -81,7 +76,6 @@ async function seed() {
       ON CONFLICT DO NOTHING
     `, [SEEDS.transactions.aliceGold, SEEDS.wallets.treasury, SEEDS.assets.goldCoins, SEEDS.wallets.alice]);
 
-        // Tx2: Alice ← 50 Diamonds (from Treasury)
         await client.query(`
       INSERT INTO transactions (id, transaction_type, reference, initiated_by)
       VALUES ($1, 'topup', 'SEED-ALICE-DIA', 'system')
@@ -96,7 +90,6 @@ async function seed() {
       ON CONFLICT DO NOTHING
     `, [SEEDS.transactions.aliceDia, SEEDS.wallets.treasury, SEEDS.assets.diamonds, SEEDS.wallets.alice]);
 
-        // Tx3: Bob ← 500 Gold Coins (from Treasury)
         await client.query(`
       INSERT INTO transactions (id, transaction_type, reference, initiated_by)
       VALUES ($1, 'topup', 'SEED-BOB-GOLD', 'system')
@@ -111,7 +104,6 @@ async function seed() {
       ON CONFLICT DO NOTHING
     `, [SEEDS.transactions.bobGold, SEEDS.wallets.treasury, SEEDS.assets.goldCoins, SEEDS.wallets.bob]);
 
-        // Tx4: Bob ← 200 Loyalty Points (from Bonus Pool)
         await client.query(`
       INSERT INTO transactions (id, transaction_type, reference, initiated_by)
       VALUES ($1, 'bonus', 'SEED-BOB-LPT', 'system')
@@ -127,9 +119,8 @@ async function seed() {
     `, [SEEDS.transactions.bobLpt, SEEDS.wallets.bonusPool, SEEDS.assets.loyaltyPoints, SEEDS.wallets.bob]);
 
         await client.query('COMMIT');
-        console.log('  ✅ Initial balances created');
+        console.log('Initial balances created');
 
-        // ── Verify ledger balance ──────────────────────────────────────────────
         const verifyResult = await pool.query(`
       SELECT
         w.label,
@@ -143,10 +134,10 @@ async function seed() {
       ORDER  BY w.label, at.symbol
     `);
 
-        console.log('\n📊 Ledger Verification:');
+        console.log('Ledger Verification:');
         console.table(verifyResult.rows);
 
-        console.log('\n✅ Seed completed successfully!\n');
+        console.log('Seed completed successfully!\n');
         console.log('Quick Reference IDs:');
         console.log('─'.repeat(50));
         console.log('Assets:');
@@ -163,15 +154,14 @@ async function seed() {
 
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error('❌ Seed failed:', err.message);
+        console.error('Seed failed:', err.message);
         process.exit(1);
     } finally {
         client.release();
-        await pool.end();
+
     }
 }
 
-// Run if called directly
 if (require.main === module) {
     seed();
 }

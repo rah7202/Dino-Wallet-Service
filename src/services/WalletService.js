@@ -10,7 +10,7 @@ const {
 } = require('../errors/ApiError');
 const IdempotencyRepository = require('../repositories/IdempotencyRepository');
 
-// System wallet references
+
 const SYSTEM_REFS = {
     TREASURY: 'system:treasury',
     BONUS_POOL: 'system:bonus_pool',
@@ -18,9 +18,7 @@ const SYSTEM_REFS = {
 };
 
 class WalletService {
-    /**
-     * Initialize service with all repositories
-     */
+
     constructor({ walletRepo, ledgerRepo, txRepo, assetRepo, idemRepo }) {
         this.walletRepo = walletRepo;
         this.ledgerRepo = ledgerRepo;
@@ -29,13 +27,7 @@ class WalletService {
         this.idemRepo = idemRepo;
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // READ OPERATIONS
-    // ══════════════════════════════════════════════════════════════════════════
 
-    /**
-     * Get wallet balance (computed from ledger)
-     */
     async getBalance(walletId) {
         const wallet = await this.walletRepo.getById(walletId);
         if (!wallet) throw new NotFoundError('Wallet not found');
@@ -49,9 +41,7 @@ class WalletService {
         };
     }
 
-    /**
-     * Get transaction history (paginated)
-     */
+
     async getTransactions(walletId, { limit = 20, offset = 0 } = {}) {
         const wallet = await this.walletRepo.getById(walletId);
         if (!wallet) throw new NotFoundError('Wallet not found');
@@ -71,29 +61,17 @@ class WalletService {
         };
     }
 
-    /**
-     * List all asset types
-     */
+
     async listAssets() {
         return this.assetRepo.listActive();
     }
 
-    /**
-     * List all wallets
-     */
+
     async listWallets() {
         return this.walletRepo.listAll();
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // THE THREE FLOWS (Write Operations)
-    // ══════════════════════════════════════════════════════════════════════════
 
-    /**
-     * FLOW 1: Top-up (Purchase)
-     * User purchases credits with real money
-     * Treasury → User wallet
-     */
     async topUp(walletId, { assetTypeId, amount, reference, initiatedBy, metadata }, idemKey, endpoint) {
         const treasuryWallet = await this.walletRepo.getSystemWalletByRef(SYSTEM_REFS.TREASURY);
         if (!treasuryWallet) {
@@ -114,13 +92,11 @@ class WalletService {
         });
     }
 
-    /**
-     * FLOW 2: Bonus / Incentive
-     * System issues free credits to user
-     * Bonus Pool → User wallet
-     */
+
     async bonus(walletId, { assetTypeId, amount, reference, initiatedBy, metadata }, idemKey, endpoint) {
+
         const bonusPool = await this.walletRepo.getSystemWalletByRef(SYSTEM_REFS.BONUS_POOL);
+
         if (!bonusPool) {
             throw new NotFoundError('Bonus Pool system wallet not configured');
         }
@@ -139,13 +115,11 @@ class WalletService {
         });
     }
 
-    /**
-     * FLOW 3: Spend / Purchase
-     * User spends credits to buy service
-     * User wallet → Revenue
-     */
+
     async spend(walletId, { assetTypeId, amount, reference, initiatedBy, metadata }, idemKey, endpoint) {
+
         const revenueWallet = await this.walletRepo.getSystemWalletByRef(SYSTEM_REFS.REVENUE);
+
         if (!revenueWallet) {
             throw new NotFoundError('Revenue system wallet not configured');
         }
@@ -164,44 +138,7 @@ class WalletService {
         });
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // CORE TRANSFER ENGINE
-    // ══════════════════════════════════════════════════════════════════════════
 
-    /**
-     * _executeTransfer — THE SINGLE CODE PATH FOR ALL BALANCE MUTATIONS
-     *
-     * This function enforces ALL critical requirements:
-     *
-     * ✅ 1. IDEMPOTENCY
-     *    - Check cache before executing
-     *    - Store result atomically in same transaction
-     *    - Return cached response if duplicate request
-     *
-     * ✅ 2. VALIDATION
-     *    - Amount must be positive
-     *    - Asset type must exist and be active
-     *    - Wallets must exist and be active
-     *    - Sufficient balance for spend operations
-     *
-     * ✅ 3. DEADLOCK PREVENTION
-     *    - Lock wallets in SORTED UUID order (canonical ordering)
-     *    - Two concurrent txs touching same wallets will ALWAYS
-     *      acquire locks in same order → no circular wait
-     *
-     * ✅ 4. DOUBLE-ENTRY LEDGER
-     *    - Every transfer creates exactly 2 ledger entries:
-     *      * DEBIT from source wallet
-     *      * CREDIT to destination wallet
-     *    - Same amount, same asset, same transaction
-     *
-     * ✅ 5. ATOMICITY
-     *    - All DB writes in single ACID transaction
-     *    - Auto-retry on serialization failures
-     *    - Rollback on any error
-     *
-     * @returns {Object} { data: TransferResult, fromCache: boolean }
-     */
     async _executeTransfer({
         fromWalletId,
         toWalletId,
@@ -215,13 +152,14 @@ class WalletService {
         endpoint,
     }) {
 
-        // ── STEP 1: Validate Amount ─────────────────────────────────────────────
+
         const numAmount = parseFloat(amount);
+
         if (isNaN(numAmount) || numAmount <= 0) {
             throw new BadRequestError('Amount must be a positive number');
         }
 
-        // ── STEP 2: Check Idempotency (Optimistic Read) ─────────────────────────
+
         const requestHash = IdempotencyRepository.hashRequest({
             assetTypeId,
             amount,
@@ -230,19 +168,19 @@ class WalletService {
 
         const existing = await this.idemRepo.get(idemKey);
         if (existing) {
-            // Found existing record
+
             if (existing.request_hash !== requestHash) {
                 throw new ConflictError(
                     'Idempotency-Key already used with a different request body'
                 );
             }
 
-            // Cache hit - return stored response
-            console.log(`💾 Idempotency cache hit: ${idemKey}`);
+
+            console.log(`Idempotency cache hit: ${idemKey}`);
             return { data: existing.response_body, fromCache: true };
         }
 
-        // ── STEP 3: Validate Asset Type ─────────────────────────────────────────
+
         const asset = await this.assetRepo.getById(assetTypeId);
         if (!asset) {
             throw new NotFoundError(`Asset type not found: ${assetTypeId}`);
@@ -251,18 +189,17 @@ class WalletService {
             throw new BadRequestError('Asset type is not active');
         }
 
-        // ── STEP 4: Execute in ACID Transaction ─────────────────────────────────
+
         const result = await withTransaction(async (client) => {
 
-            // 🔒 DEADLOCK PREVENTION: Lock wallets in SORTED order
-            // This is THE critical step that prevents deadlocks
+
             const walletMap = await this.walletRepo.lockWallets(
                 client,
                 fromWalletId,
                 toWalletId
             );
 
-            // Validate both wallets are active
+
             if (!walletMap[fromWalletId].is_active) {
                 throw new BadRequestError('Source wallet is inactive');
             }
@@ -270,8 +207,7 @@ class WalletService {
                 throw new BadRequestError('Destination wallet is inactive');
             }
 
-            // For SPEND: check sufficient balance AFTER acquiring lock
-            // (checking before lock = race condition)
+
             if (txType === 'spend') {
                 const balance = await this.ledgerRepo.getBalanceForAsset(
                     client,
@@ -286,7 +222,7 @@ class WalletService {
                 }
             }
 
-            // Create transaction record
+
             const txId = uuidv4();
             const tx = await this.txRepo.insert(client, {
                 id: txId,
@@ -296,8 +232,7 @@ class WalletService {
                 metadata,
             });
 
-            // Write double-entry ledger:
-            // 1. DEBIT source wallet
+
             await this.ledgerRepo.insertEntry(client, {
                 transactionId: txId,
                 walletId: fromWalletId,
@@ -306,7 +241,7 @@ class WalletService {
                 amount: numAmount,
             });
 
-            // 2. CREDIT destination wallet
+
             await this.ledgerRepo.insertEntry(client, {
                 transactionId: txId,
                 walletId: toWalletId,
@@ -315,7 +250,7 @@ class WalletService {
                 amount: numAmount,
             });
 
-            // Build response
+
             const transferResult = {
                 transaction_id: txId,
                 transaction_type: txType,
@@ -328,7 +263,7 @@ class WalletService {
                 created_at: tx.created_at,
             };
 
-            // Store idempotency record ATOMICALLY (same transaction)
+
             await this.idemRepo.store(client, {
                 idemKey,
                 endpoint,
@@ -341,7 +276,7 @@ class WalletService {
             return transferResult;
         });
 
-        console.log(`✅ ${txType} completed: ${result.transaction_id}`);
+        console.log(`${txType} completed: ${result.transaction_id}`);
         return { data: result, fromCache: false };
     }
 }

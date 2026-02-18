@@ -2,13 +2,9 @@
 
 const { APIError } = require('../errors/ApiError');
 
-/**
- * Global error handler - converts errors to JSON responses
- * Must be the LAST middleware in the chain
- */
+
 const errorHandler = (err, req, res, next) => {
 
-    // Known API errors (validation, not found, etc.)
     if (err instanceof APIError) {
         return res.status(err.statusCode).json({
             error: err.message,
@@ -16,7 +12,6 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // PostgreSQL-specific errors
     if (err.code) {
         switch (err.code) {
             case '23505': // unique_violation
@@ -51,8 +46,7 @@ const errorHandler = (err, req, res, next) => {
         }
     }
 
-    // Unexpected errors - log internally, return generic message
-    console.error('❌ Unhandled error:', {
+    console.error('Unhandled error:', {
         message: err.message,
         stack: err.stack,
         path: req.path,
