@@ -59,13 +59,13 @@ graph TB
         API[REST API Client]
     end
     
-    subgraph "Application Layer"
+    subgraph "      Application Layer"
         Express[Express.js Server]
         WalletService[Wallet Service]
         Repos[Repositories]
     end
     
-    subgraph "Data Layer"
+    subgraph "     Data Layer"
         PG[(PostgreSQL 16)]
         Ledger[Ledger Entries]
         Wallets[Wallets]
@@ -190,6 +190,10 @@ flowchart TD
 ---
 
 ## 🛠 Tech Stack
+
+### Tech Stack Used 
+
+<img src="https://skill-icons.rpidiyar249.workers.dev/icons?i=js,nodejs,postman,postgres,docker,git,github&perline=7" />
 
 ### Backend
 - **Node.js 20** - JavaScript runtime
