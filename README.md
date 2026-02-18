@@ -59,13 +59,13 @@ graph TB
         API[REST API Client]
     end
     
-    subgraph "      Application Layer"
+    subgraph "Application Layer"
         Express[Express.js Server]
         WalletService[Wallet Service]
         Repos[Repositories]
     end
     
-    subgraph "     Data Layer"
+    subgraph "Data Layer"
         PG[(PostgreSQL 16)]
         Ledger[Ledger Entries]
         Wallets[Wallets]
@@ -287,9 +287,6 @@ docker-compose down
 **Local:** `http://localhost:3000`  
 **Production:** `https://dino-wallet-api.onrender.com`
 
-### Authentication
-
-No authentication required for this demo. In production, use JWT or API keys.
 
 ### Endpoints
 
@@ -697,7 +694,6 @@ await withTransaction(async (client) => {
 
 ### Render (Production)
 
-**Live URL:** https://dino-wallet-api.onrender.com
 
 #### Services
 
@@ -1019,7 +1015,6 @@ GitHub: [https://github.com/rah7202]
 Email: [rpidiyar249@gmail.com]
 Linkedin: [https://www.linkedin.com/in/rahul-pidiyar-101115284/]
 
-**Live Demo:** https://dino-wallet-api.onrender.com
 
 ---
 
